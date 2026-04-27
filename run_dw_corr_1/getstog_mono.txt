@@ -1,0 +1,23 @@
+1
+ZrO2_p_SQ.dat
+0.5 30
+1 0.8
+0.0
+ZrO2_MONO.sq
+ZrO2_MONO.gr
+40
+2000
+N
+0.0851
+0
+N
+Y
+1.75
+ZrO2_MONO_ft.sq
+ZrO2_MONO_ft.gr
+0.39146000000000
+ZrO2_MONO_RMC.fq
+ZrO2_MONO_RMC.gr
+ZrO2_MONO_RMC.dr
+1 2 3
+

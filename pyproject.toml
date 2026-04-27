@@ -1,0 +1,21 @@
+[project]
+name = "pyrmcmon"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ccoverstreet", email = "cale.overstreet@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "matplotlib>=3.10.9",
+    "pyqt6>=6.11.0",
+    "pyqtgraph>=0.14.0",
+]
+
+[project.scripts]
+pyrmcmon = "pyrmcmon:__main__.main"
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
