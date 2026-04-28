@@ -72,7 +72,12 @@ class ControlPane(QWidget):
         self.select_button.clicked.connect(self.select_rmc_dat_file)
         self.vbox.addWidget(self.select_button)
 
+        self.refresh_button = QPushButton("Refresh Data")
+        self.refresh_button.clicked.connect(self.refresh_data)
+        self.vbox.addWidget(self.refresh_button)
+
         self.rmc_file = ""
+
 
         self.setLayout(self.vbox)
 
@@ -84,6 +89,9 @@ class ControlPane(QWidget):
             return
 
         self.rmc_file = file[0]
+        self.rmc_file_selected.emit(self.rmc_file)
+
+    def refresh_data(self):
         self.rmc_file_selected.emit(self.rmc_file)
 
 
@@ -129,11 +137,15 @@ class SQTab(QWidget):
 
     @pyqtSlot(str)
     def plot_rmc(self, file):
+        self.plot.axes.clear()
         dirname, stem = get_dir_and_stem(file)
         SQ1_filename = f"{dirname}/{stem}_SQ1.csv"
-        self.data = np.genfromtxt(SQ1_filename, delimiter=",")
+        try:
+            self.data = np.genfromtxt(SQ1_filename, delimiter=",")
+        except Exception as e:
+            print(e)
+            return
 
-        self.plot.axes.clear()
         self.plot.axes.plot(self.data[:, 0], self.data[:, 2], label="Data",
                             color="k")
         self.plot.axes.plot(self.data[:, 0], self.data[:, 1], label="RMC",
@@ -158,9 +170,15 @@ class PartialSQTab(QWidget):
 
     @pyqtSlot(str)
     def plot_rmc(self, file):
+        self.plot.axes.clear()
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}_SQ1partials.csv"
-        self.data = np.genfromtxt(filename, delimiter=",", skip_header=1)
+        try: 
+            self.data = np.genfromtxt(filename, delimiter=",", skip_header=1)
+        except Exception as e:
+            print(e)
+            return
+
 
         header = []
         with open(filename) as f:
@@ -168,7 +186,6 @@ class PartialSQTab(QWidget):
                 header = line.replace("\n", "").split(",")
                 break
 
-        self.plot.axes.clear()
 
         for i in range(1, len(header)):
             self.plot.axes.plot(self.data[:, 0], self.data[:, i], label=header[i])
@@ -194,11 +211,16 @@ class BraggTab(QWidget):
 
     @pyqtSlot(str)
     def plot_rmc(self, file):
+        self.plot.axes.clear()
         dirname, stem = get_dir_and_stem(file)
         SQ1_filename = f"{dirname}/{stem}_bragg.csv"
-        self.data = np.genfromtxt(SQ1_filename, delimiter=",")
+        try:
+            self.data = np.genfromtxt(SQ1_filename, delimiter=",")
+        except Exception as e:
+            print(e)
+            return
 
-        self.plot.axes.clear()
+
         self.plot.axes.plot(self.data[:, 0], self.data[:, 2], label="Data",
                             color="k")
         self.plot.axes.plot(self.data[:, 0], self.data[:, 1], label="RMC",
@@ -223,11 +245,15 @@ class PDFTab(QWidget):
 
     @pyqtSlot(str)
     def plot_rmc(self, file):
+        self.plot.axes.clear()
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}_PDF1.csv"
-        self.data = np.genfromtxt(filename, delimiter=",")
+        try:
+            self.data = np.genfromtxt(filename, delimiter=",")
+        except Exception as e:
+            print(e)
+            return
 
-        self.plot.axes.clear()
         self.plot.axes.plot(self.data[:, 0], self.data[:, 2], label="Data",
                             color="k")
         self.plot.axes.plot(self.data[:, 0], self.data[:, 1], label="RMC",
@@ -251,9 +277,14 @@ class PartialPDFTab(QWidget):
 
     @pyqtSlot(str)
     def plot_rmc(self, file):
+        self.plot.axes.clear()
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}_PDFpartials.csv"
-        self.data = np.genfromtxt(filename, delimiter=",", skip_header=1)
+        try:
+            self.data = np.genfromtxt(filename, delimiter=",", skip_header=1)
+        except Exception as e:
+            print(e)
+            return
 
         header = []
         with open(filename) as f:
@@ -261,7 +292,6 @@ class PartialPDFTab(QWidget):
                 header = line.replace("\n", "").split(",")
                 break
 
-        self.plot.axes.clear()
 
         for i in range(1, len(header)):
             self.plot.axes.plot(self.data[:, 0], self.data[:, i], label=header[i])
