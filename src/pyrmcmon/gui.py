@@ -138,6 +138,7 @@ class SQTab(QWidget):
     @pyqtSlot(str)
     def plot_rmc(self, file):
         self.plot.axes.clear()
+        self.plot.update_plot()
         dirname, stem = get_dir_and_stem(file)
         SQ1_filename = f"{dirname}/{stem}_SQ1.csv"
         try:
@@ -171,6 +172,7 @@ class PartialSQTab(QWidget):
     @pyqtSlot(str)
     def plot_rmc(self, file):
         self.plot.axes.clear()
+        self.plot.update_plot()
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}_SQ1partials.csv"
         try: 
@@ -246,6 +248,7 @@ class PDFTab(QWidget):
     @pyqtSlot(str)
     def plot_rmc(self, file):
         self.plot.axes.clear()
+        self.plot.update_plot()
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}_PDF1.csv"
         try:
@@ -278,6 +281,7 @@ class PartialPDFTab(QWidget):
     @pyqtSlot(str)
     def plot_rmc(self, file):
         self.plot.axes.clear()
+        self.plot.update_plot()
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}_PDFpartials.csv"
         try:
