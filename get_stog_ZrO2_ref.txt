@@ -1,0 +1,23 @@
+1
+../run_dw_corr_1/NOM_9999_ZrO2_pristine_at_100K_50_SQ_rebin.dat
+0.5 30.0
+0.0 1.0
+0.0
+ZrO2_ref_scaled.sq
+ZrO2_ref_scaled.gr
+50.0
+5000
+N
+0.0851
+0.0
+N
+Y
+0.0
+ZrO2_ref_ft.sq
+ZrO2_ref_ft.gr
+0.39146
+ZrO2_ref_ft_rmc.fq
+ZrO2_ref_ft_rmc.gr
+ZrO2_ref_ft_rmc.dr
+1.0 2.0 3.0
+

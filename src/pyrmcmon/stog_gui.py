@@ -1,8 +1,11 @@
-from PyQt6.QtCore import QSettings
-from PyQt6.QtWidgets import QPushButton, QLabel, QDoubleSpinBox, QSpinBox, QLineEdit, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QFileDialog
+from PyQt6.QtCore import QSettings, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QPushButton, QLabel, QDoubleSpinBox, QSpinBox, QLineEdit, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QFileDialog, QTabWidget, QErrorMessage
 from dataclasses import dataclass
 import os
 import subprocess
+import numpy as np
+
+from .util_gui import PlotWidget
 
 SETTINGS = QSettings("CCO", "PyRMCMon")
 
@@ -70,13 +73,19 @@ class StoGPage(QWidget):
         self.hbox = QHBoxLayout()
 
         self.controls = StoGControls()
+        self.plots = StoGPlotting()
+
+        self.controls.stog_conf_run.connect(self.plots.plot_stog)
 
         self.hbox.addWidget(self.controls)
+        self.hbox.addWidget(self.plots)
 
         self.setLayout(self.hbox)
 
 
 class StoGControls(QWidget):
+    stog_conf_run = pyqtSignal(StoGConfig)
+
     def __init__(self):
         super().__init__()
 
@@ -89,7 +98,6 @@ class StoGControls(QWidget):
         self.rmcprofile_dir_row_label = QLabel(SETTINGS.value("RMCProfileDir"))
         self.rmcprofile_dir_row.addWidget(self.rmcprofile_dir_row_button)
         self.rmcprofile_dir_row.addWidget(self.rmcprofile_dir_row_label)
-
 
         self.input_file_row = QVBoxLayout()
 
@@ -344,7 +352,36 @@ class StoGControls(QWidget):
 
         input_relpath = os.path.relpath(self.input_filename, self.output_dir)
 
-        conf = StoGConfig(
+        conf_abs = StoGConfig(
+            1,
+            self.input_filename,
+            self.Q_lim_row_min_input.value(),
+            self.Q_lim_row_max_input.value(),
+            self.scale_offset_row_offset_input.value(),
+            self.scale_offset_row_scale_input.value(),
+            self.Q_offset_row_input.value(),
+            f"{self.output_dir}/{stem}_scaled.sq",
+            f"{self.output_dir}/{stem}_scaled.gr",
+            self.r_max_row_input.value(),
+            self.r_point_row_input.value(),
+            self.windows_function_row_checkbox.isChecked(),
+            self.number_density_row_input.value(),
+            self.yoffset2_row_input.value(),
+            False,
+            self.fourier_filter_row_checkbox.isChecked(),
+            self.fourier_filter_row_cutoff_input.value(),
+            f"{self.output_dir}/{stem}_ft.sq",
+            f"{self.output_dir}/{stem}_ft.gr",
+            self.faber_ziman_row_input.value(),
+            f"{self.output_dir}/{stem}_ft_rmc.fq",
+            f"{self.output_dir}/{stem}_ft_rmc.gr",
+            f"{self.output_dir}/{stem}_ft_rmc.dr",
+            self.ripple_row_cutoff_input.value(),
+            self.ripple_row_min_input.value(),
+            self.ripple_row_max_input.value(),
+        )
+
+        conf_rel = StoGConfig(
             1,
             input_relpath,
             self.Q_lim_row_min_input.value(),
@@ -373,19 +410,176 @@ class StoGControls(QWidget):
             self.ripple_row_max_input.value(),
         )
 
+        with open(f"{self.output_dir}/get_stog_{stem}.txt", "w") as f:
+            f.write(conf_rel.to_text())
+
         rmc_dir = SETTINGS.value("RMCProfileDir")
         env = os.environ.copy()
         env["LD_LIBRARY_PATH"] = f"{rmc_dir}/exe/libs"
         env["LIBRARY_PATH"] = f"{rmc_dir}/exe/libs"
         res = subprocess.run([f"{rmc_dir}/exe/stog_new"],
-                             input=conf.to_text(), text=True, env=env,
-                             cwd=self.output_dir)
+                             input=conf_rel.to_text(), text=True, env=env,
+                             cwd=self.output_dir, capture_output=True)
 
+        print(res)
         print(f"{SETTINGS.value("RMCProfileDir")}/exe/stog_new")
 
-        print(conf.to_text())
-        print(res)
-        print(res.stdout)
-        pass
+        self.stog_conf_run.emit(conf_abs)
 
 
+class StoGPlotting(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.hbox = QHBoxLayout()
+
+        self.tabs = QTabWidget()
+        self.starting_plot = StartingPlot()
+        self.scaled_plot = ScaledPlot()
+        self.ft_plot = FTPlot()
+        self.ftrmc_plot = FTRMCPlot()
+        self.tabs.addTab(self.starting_plot, "Starting S(Q)")
+        self.tabs.addTab(self.scaled_plot, "Scaled")
+        self.tabs.addTab(self.ft_plot, "FT")
+        self.tabs.addTab(self.ftrmc_plot, "FT RMC")
+
+        self.hbox.addWidget(self.tabs)
+
+        self.setLayout(self.hbox)
+
+    @pyqtSlot(StoGConfig)
+    def plot_stog(self, conf: StoGConfig):
+        self.starting_plot.plot_stog(conf)
+        self.scaled_plot.plot_stog(conf)
+        self.ft_plot.plot_stog(conf)
+        self.ftrmc_plot.plot_stog(conf)
+
+
+class StartingPlot(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout() 
+
+        self.plot = PlotWidget()
+        self.layout.addWidget(self.plot)
+
+        self.setLayout(self.layout)
+
+    def plot_stog(self, conf: StoGConfig):
+        self.plot.clear_plot()
+
+        try:
+            self.data = np.genfromtxt(conf.input_filename, skip_header=2)
+        except Exception as e:
+            QErrorMessage(f"Unable to plot starting S(Q): {e}")
+
+        self.plot.axes.plot(self.data[:, 0], self.data[:, 1], color="k")
+        self.plot.axes.set_xlabel(r"Q [$\AA^{-1}$]", fontsize=16)
+        self.plot.axes.set_ylabel(r"S(Q)", fontsize=16)
+        self.plot.fig.tight_layout()
+        self.plot.update_plot()
+
+
+class ScaledPlot(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout() 
+
+        self.plot = PlotWidget()
+        self.layout.addWidget(self.plot)
+
+        self.setLayout(self.layout)
+
+    def plot_stog(self, conf: StoGConfig):
+        self.plot.clear_plot()
+        self.plot.fig.clear()
+
+        try:
+            self.sq = np.genfromtxt(conf.scaled_sq_name, skip_header=2)
+            self.gr = np.genfromtxt(conf.scaled_gr_name, skip_header=2)
+        except Exception as e:
+            QErrorMessage(f"Unable to plot scaled data: {e}")
+
+        [ax1, ax2] = self.plot.fig.subplots(2, 1)
+        ax1.plot(self.sq[:, 0], self.sq[:, 1], color="k")
+        ax2.plot(self.gr[:, 0], self.gr[:, 1], color="k")
+        ax2.axhline(0, color="tab:red", ls="-, ls="--"-")
+
+        ax1.set_xlabel(r"Q [$\AA^{-1}$]", fontsize=16)
+        ax1.set_ylabel(r"S(Q)", fontsize=16)
+
+        ax2.set_xlabel(r"r [$\AA$]", fontsize=16)
+        ax2.set_ylabel(r"G(r)", fontsize=16)
+
+        self.plot.fig.tight_layout()
+        self.plot.update_plot()
+
+class FTPlot(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout() 
+
+        self.plot = PlotWidget()
+        self.layout.addWidget(self.plot)
+
+        self.setLayout(self.layout)
+
+    def plot_stog(self, conf: StoGConfig):
+        self.plot.clear_plot()
+        self.plot.fig.clear()
+
+        try:
+            self.sq = np.genfromtxt(conf.ft_sq_name, skip_header=2)
+            self.gr = np.genfromtxt(conf.ft_gr_name, skip_header=2)
+        except Exception as e:
+            QErrorMessage(f"Unable to plot ft data: {e}")
+
+        [ax1, ax2] = self.plot.fig.subplots(2, 1)
+        ax1.plot(self.sq[:, 0], self.sq[:, 1], color="k")
+        ax2.plot(self.gr[:, 0], self.gr[:, 1], color="k")
+
+        ax1.set_xlabel(r"Q [$\AA^{-1}$]", fontsize=16)
+        ax1.set_ylabel(r"S(Q)", fontsize=16)
+
+        ax2.set_xlabel(r"r [$\AA$]", fontsize=16)
+        ax2.set_ylabel(r"G(r)", fontsize=16)
+
+        self.plot.fig.tight_layout()
+        self.plot.update_plot()
+
+class FTRMCPlot(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout() 
+
+        self.plot = PlotWidget()
+        self.layout.addWidget(self.plot)
+
+        self.setLayout(self.layout)
+
+    def plot_stog(self, conf: StoGConfig):
+        self.plot.clear_plot()
+        self.plot.fig.clear()
+
+        try:
+            self.fq = np.genfromtxt(conf.ft_rmc_fq_name, skip_header=2)
+            self.gr = np.genfromtxt(conf.ft_rmc_gr_name, skip_header=2)
+        except Exception as e:
+            QErrorMessage(f"Unable to plot ft RMC data: {e}")
+
+        [ax1, ax2] = self.plot.fig.subplots(2, 1)
+        ax1.plot(self.fq[:, 0], self.fq[:, 1], color="k")
+        ax2.plot(self.gr[:, 0], self.gr[:, 1], color="k")
+
+        ax1.set_xlabel(r"Q [$\AA^{-1}$]", fontsize=16)
+        ax1.set_ylabel(r"F(Q)", fontsize=16)
+
+        ax2.set_xlabel(r"r [$\AA$]", fontsize=16)
+        ax2.set_ylabel(r"G(r)", fontsize=16)
+
+        self.plot.fig.tight_layout()
+        self.plot.update_plot()
