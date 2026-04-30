@@ -122,6 +122,12 @@ class StoGControls(QWidget):
         self.stem_name_row.addWidget(self.stem_name_row_label)
         self.stem_name_row.addWidget(self.stem_name_row_input)
 
+        self.load_params_row = QHBoxLayout()
+
+        self.load_params_row_button = QPushButton("Load StoG params")
+        self.load_params_row_button.clicked.connect(self.load_stog_params)
+        self.load_params_row.addWidget(self.load_params_row_button)
+
         self.Q_lim_row = QHBoxLayout()
 
         self.Q_lim_row_min_label = QLabel("Q<sub>min</sub>")
@@ -298,6 +304,7 @@ class StoGControls(QWidget):
         self.vbox.addLayout(self.input_file_row)
         self.vbox.addLayout(self.output_dir_row)
         self.vbox.addLayout(self.stem_name_row)
+        self.vbox.addLayout(self.load_params_row)
         self.vbox.addLayout(self.Q_lim_row)
         self.vbox.addLayout(self.scale_offset_row)
         self.vbox.addLayout(self.Q_offset_row)
@@ -346,6 +353,72 @@ class StoGControls(QWidget):
             return
         self.output_dir = temp_output
         self.output_dir_row_label.setText(self.output_dir)
+
+    def load_stog_params(self):
+        temp_input_filename = QFileDialog.getOpenFileName(self, "Select get_stog file")
+        if temp_input_filename[0] == "":
+            return
+        
+        filename = temp_input_filename[0]
+        with open(filename) as f:
+            for i, line in enumerate(f):
+                if i == 2:
+                    split = line.split()
+                    Q_min = float(split[0])
+                    Q_max = float(split[1])
+                    self.Q_lim_row_min_input.setValue(Q_min)
+                    self.Q_lim_row_max_input.setValue(Q_max)
+                elif i == 3:
+                    split = line.split()
+                    offset = float(split[0])
+                    scale = float(split[1])
+                    self.scale_offset_row_offset_input.setValue(offset)
+                    self.scale_offset_row_scale_input.setValue(offset)
+                elif i == 4:
+                    qoffset = float(line)
+                    self.Q_offset_row_input.setValue(qoffset)
+                elif i == 7:
+                    r_max = float(line)
+                    self.r_max_row_input.setValue(r_max)
+                elif i == 8:
+                    r_point = int(line)
+                    self.r_point_row_input.setValue(r_point)
+                elif i == 9:
+                    if "Y" in line:
+                        self.windows_function_row_checkbox.setChecked(True)
+                    else:
+                        self.windows_function_row_checkbox.setChecked(False)
+                elif i == 10:
+                    dens = float(line)
+                    self.number_density_row_input.setValue(dens)
+                elif i == 11:
+                    y_offset_2 = float(line)
+                    self.yoffset2_row_input.setValue(y_offset_2)
+                elif i == 13:
+                    if "Y" in line:
+                        self.fourier_filter_row_checkbox.setChecked(True)
+                    else:
+                        self.fourier_filter_row_checkbox.setChecked(False)
+                elif i == 14:
+                    r_min = float(line)
+                    self.fourier_filter_row_cutoff_input.setValue(r_min)
+                elif i == 17:
+                    fz = float(line)
+                    self.faber_ziman_row_input.setValue(fz)
+                elif i == 21:
+                    split = line.split()
+                    a, b, c = [float(x) for x in split]
+                    self.ripple_row_cutoff_input.setValue(a)
+                    self.ripple_row_min_input.setValue(b)
+                    self.ripple_row_max_input.setValue(c)
+
+
+                    
+
+
+
+
+
 
     def run_stog(self):
         stem = self.stem_name_row_input.text()
