@@ -1,6 +1,6 @@
 # PyRMCMon
 
-PyRMCMon is a PyQt6 program for monitoring the output of RMCProfile runs (S(Q), Bragg, PDFs, partials) and a GUI interface for stog_new as part of the RMCProfile software package.
+PyRMCMon is a PyQt6 program for monitoring the output of RMCProfile runs (S(Q), Bragg, PDFs, partials) and a GUI interface for stog_new from the RMCProfile software package.
 
 This python package can be installed via:
 
