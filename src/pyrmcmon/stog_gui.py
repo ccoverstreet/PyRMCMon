@@ -505,7 +505,7 @@ class ScaledPlot(QWidget):
         [ax1, ax2] = self.plot.fig.subplots(2, 1)
         ax1.plot(self.sq[:, 0], self.sq[:, 1], color="k")
         ax2.plot(self.gr[:, 0], self.gr[:, 1], color="k")
-        ax2.axhline(0, color="tab:red", ls="-, ls="--"-")
+        ax2.axhline(0, color="tab:red", ls="--")
 
         ax1.set_xlabel(r"Q [$\AA^{-1}$]", fontsize=16)
         ax1.set_ylabel(r"S(Q)", fontsize=16)
