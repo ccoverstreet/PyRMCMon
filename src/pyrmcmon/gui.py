@@ -1,14 +1,18 @@
 import sys
 import os
 
-from PyQt6.QtCore import (pyqtSignal, pyqtSlot)
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QHBoxLayout, QTabWidget, QVBoxLayout, QFileDialog
+from PyQt6.QtCore import (pyqtSignal, pyqtSlot, QSettings)
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QHBoxLayout, QTabWidget, QVBoxLayout, QFileDialog, QLineEdit, QDoubleSpinBox, QSpinBox, QCheckBox
 import pyqtgraph as pg
 from dataclasses import dataclass
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
+
+from .stog_gui import StoGPage
+
+SETTINGS = QSettings("CCO", "PyRMCMon")
 
 def get_dir_and_stem(file):
     dirname = os.path.dirname(file)
@@ -23,6 +27,30 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("PyRMCMon")
 
         self.container = QWidget()
+        self.hbox = QHBoxLayout()
+
+        self.main_tabs = QTabWidget()
+
+        self.monitor_page = MonitorPage()
+        self.main_tabs.addTab(self.monitor_page, "Monitor")
+
+        self.stog_page = StoGPage()
+        self.main_tabs.addTab(self.stog_page, "StoG")
+
+        self.hbox.addWidget(self.main_tabs)
+
+        self.container.setLayout(self.hbox)
+
+
+        self.setCentralWidget(self.container)
+
+        self.setMinimumSize(1000, 700)
+
+
+
+class MonitorPage(QWidget):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        super().__init__()
 
         self.hbox = QHBoxLayout()
 
@@ -44,8 +72,6 @@ class MainWindow(QMainWindow):
 
         self.hbox.addWidget(self.tabs)
 
-        self.container.setLayout(self.hbox)
-
         self.controls.rmc_file_selected.connect(self.handle_rmc_file_selected)
         self.controls.rmc_file_selected.connect(self.SQTab.plot_rmc)
         self.controls.rmc_file_selected.connect(self.PartialSQTab.plot_rmc)
@@ -53,12 +79,12 @@ class MainWindow(QMainWindow):
         self.controls.rmc_file_selected.connect(self.PDFTab.plot_rmc)
         self.controls.rmc_file_selected.connect(self.PartialPDFTab.plot_rmc)
 
-        self.setCentralWidget(self.container)
-
+        self.setLayout(self.hbox)
 
     @pyqtSlot(str)
     def handle_rmc_file_selected(self, filename):
         print(f"RMC file selected: {filename}")
+
 
 class ControlPane(QWidget):
     rmc_file_selected = pyqtSignal(str)
@@ -75,6 +101,8 @@ class ControlPane(QWidget):
         self.refresh_button = QPushButton("Refresh Data")
         self.refresh_button.clicked.connect(self.refresh_data)
         self.vbox.addWidget(self.refresh_button)
+
+        self.vbox.addStretch(1)
 
         self.rmc_file = ""
 
@@ -93,6 +121,7 @@ class ControlPane(QWidget):
 
     def refresh_data(self):
         self.rmc_file_selected.emit(self.rmc_file)
+
 
 
 class MplCanvas(FigureCanvas):
@@ -305,3 +334,8 @@ class PartialPDFTab(QWidget):
         self.plot.axes.legend()
 
         self.plot.update_plot()
+
+
+
+
+
