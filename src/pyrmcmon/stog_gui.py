@@ -380,7 +380,7 @@ class StoGControls(QWidget):
                     offset = float(split[0])
                     scale = float(split[1])
                     self.scale_offset_row_offset_input.setValue(offset)
-                    self.scale_offset_row_scale_input.setValue(offset)
+                    self.scale_offset_row_scale_input.setValue(scale)
                 elif i == 4:
                     qoffset = float(line)
                     self.Q_offset_row_input.setValue(qoffset)
