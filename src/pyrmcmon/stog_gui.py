@@ -301,10 +301,10 @@ class StoGControls(QWidget):
         self.run_stog_button.clicked.connect(self.run_stog)
 
         self.vbox.addLayout(self.rmcprofile_dir_row)
+        self.vbox.addLayout(self.load_params_row)
         self.vbox.addLayout(self.input_file_row)
         self.vbox.addLayout(self.output_dir_row)
         self.vbox.addLayout(self.stem_name_row)
-        self.vbox.addLayout(self.load_params_row)
         self.vbox.addLayout(self.Q_lim_row)
         self.vbox.addLayout(self.scale_offset_row)
         self.vbox.addLayout(self.Q_offset_row)
@@ -359,10 +359,17 @@ class StoGControls(QWidget):
         if temp_input_filename[0] == "":
             return
         
-        filename = temp_input_filename[0]
+        filename = temp_input_filename[0].replace("\n", "")
+        output_dir = os.path.dirname(filename)
+        self.output_dir = output_dir
+        self.output_dir_row_label.setText(self.output_dir)
         with open(filename) as f:
             for i, line in enumerate(f):
-                if i == 2:
+                if i== 1:
+                    abs_path = os.path.normpath(output_dir + "/" + line.replace("\n", "")) 
+                    self.input_filename = abs_path
+                    self.input_file_row_label.setText(self.input_filename)
+                elif i == 2:
                     split = line.split()
                     Q_min = float(split[0])
                     Q_max = float(split[1])
@@ -377,6 +384,9 @@ class StoGControls(QWidget):
                 elif i == 4:
                     qoffset = float(line)
                     self.Q_offset_row_input.setValue(qoffset)
+                elif i == 5:
+                    stem = os.path.splitext(line)[0].replace("\n", "")
+                    self.stem_name_row_input.setText(stem)
                 elif i == 7:
                     r_max = float(line)
                     self.r_max_row_input.setValue(r_max)

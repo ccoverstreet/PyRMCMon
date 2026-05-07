@@ -1,0 +1,23 @@
+1
+../run_dw_corr_1/ZrO2_p_SQ.dat
+0.5 30.0
+1.0 1.0
+0.0
+ZrO2_MONO_scaled.sq
+ZrO2_MONO_scaled.gr
+40.0
+2000
+N
+0.0851
+0.0
+N
+Y
+1.75
+ZrO2_MONO_ft.sq
+ZrO2_MONO_ft.gr
+0.39146
+ZrO2_MONO_ft_rmc.fq
+ZrO2_MONO_ft_rmc.gr
+ZrO2_MONO_ft_rmc.dr
+1.0 2.0 3.0
+
