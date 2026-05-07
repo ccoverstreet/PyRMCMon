@@ -385,7 +385,8 @@ class StoGControls(QWidget):
                     qoffset = float(line)
                     self.Q_offset_row_input.setValue(qoffset)
                 elif i == 5:
-                    stem = os.path.splitext(line)[0].replace("\n", "")
+                    stem = os.path.splitext(line)[0].replace("\n", "")\
+                        .replace("_scaled", "")
                     self.stem_name_row_input.setText(stem)
                 elif i == 7:
                     r_max = float(line)
