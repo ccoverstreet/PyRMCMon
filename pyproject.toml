@@ -1,12 +1,12 @@
 [project]
 name = "pyrmcmon"
-version = "0.5.5"
+version = "0.5.6"
 description = "Add your description here"
 readme = "README.md"
 authors = [
     { name = "ccoverstreet", email = "cale.overstreet@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "matplotlib>=3.10.9",
     "pyqt6>=6.11.0",
