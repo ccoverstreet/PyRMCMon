@@ -23,6 +23,7 @@ class StoGConfig:
     r_max: float
     r_points: int
     windows_function: bool
+    lorch_filename: str
     number_density: float
     y_offset_2: float
     try_again: bool # Should be N
@@ -57,6 +58,9 @@ class StoGConfig:
         out += f"{self.ff_r_min}\n"
         out += f"{self.ft_sq_name}\n"
         out += f"{self.ft_gr_name}\n"
+        if self.windows_function:
+            out += f"{self.lorch_filename}\n"
+
         out += f"{self.faber_ziman}\n"
         out += f"{self.ft_rmc_fq_name}\n"
         out += f"{self.ft_rmc_gr_name}\n"
@@ -209,6 +213,8 @@ class StoGControls(QWidget):
 
         self.windows_function_row_checkbox = QCheckBox()
         self.windows_function_row_label = QLabel("Windows function")
+        #self.windows_function_row_filename_input = QLineEdit()
+        #self.windows_function_row_filename_label = QLabel(": Lorch filename")
         self.windows_function_row.addWidget(self.windows_function_row_checkbox)
         self.windows_function_row.addWidget(self.windows_function_row_label)
         self.windows_function_row.addStretch(1)
@@ -355,6 +361,8 @@ class StoGControls(QWidget):
         self.output_dir_row_label.setText(self.output_dir)
 
     def load_stog_params(self):
+        # This parsing should be moved external to the GUI class and 
+        # cleaned up for handling options/conditional parsing
         temp_input_filename = QFileDialog.getOpenFileName(self, "Select get_stog file")
         if temp_input_filename[0] == "":
             return
@@ -364,69 +372,84 @@ class StoGControls(QWidget):
         self.output_dir = output_dir
         self.output_dir_row_label.setText(self.output_dir)
         with open(filename) as f:
+            use_window = False
+            true_i = 0
             for i, line in enumerate(f):
-                if i== 1:
+                if true_i== 1:
                     abs_path = os.path.normpath(output_dir + "/" + line.replace("\n", "")) 
                     self.input_filename = abs_path
                     self.input_file_row_label.setText(self.input_filename)
-                elif i == 2:
+                elif true_i == 2:
                     split = line.split()
                     Q_min = float(split[0])
                     Q_max = float(split[1])
                     self.Q_lim_row_min_input.setValue(Q_min)
                     self.Q_lim_row_max_input.setValue(Q_max)
-                elif i == 3:
+                elif true_i == 3:
                     split = line.split()
                     offset = float(split[0])
                     scale = float(split[1])
                     self.scale_offset_row_offset_input.setValue(offset)
                     self.scale_offset_row_scale_input.setValue(scale)
-                elif i == 4:
+                elif true_i == 4:
                     qoffset = float(line)
                     self.Q_offset_row_input.setValue(qoffset)
-                elif i == 5:
+                elif true_i == 5:
                     stem = os.path.splitext(line)[0].replace("\n", "")\
                         .replace("_scaled", "")
                     self.stem_name_row_input.setText(stem)
-                elif i == 7:
+                elif true_i == 7:
                     r_max = float(line)
                     self.r_max_row_input.setValue(r_max)
-                elif i == 8:
+                elif true_i == 8:
                     r_point = int(line)
                     self.r_point_row_input.setValue(r_point)
-                elif i == 9:
+                elif true_i == 9:
                     if "Y" in line:
                         self.windows_function_row_checkbox.setChecked(True)
+                        use_window = True
                     else:
                         self.windows_function_row_checkbox.setChecked(False)
-                elif i == 10:
+                elif true_i == 10:
                     dens = float(line)
                     self.number_density_row_input.setValue(dens)
-                elif i == 11:
+                elif true_i == 11:
                     y_offset_2 = float(line)
                     self.yoffset2_row_input.setValue(y_offset_2)
-                elif i == 13:
+                elif true_i == 13:
                     if "Y" in line:
                         self.fourier_filter_row_checkbox.setChecked(True)
                     else:
                         self.fourier_filter_row_checkbox.setChecked(False)
-                elif i == 14:
+                elif true_i == 14:
                     r_min = float(line)
                     self.fourier_filter_row_cutoff_input.setValue(r_min)
-                elif i == 17:
-                    fz = float(line)
-                    self.faber_ziman_row_input.setValue(fz)
-                elif i == 21:
-                    split = line.split()
-                    a, b, c = [float(x) for x in split]
-                    self.ripple_row_cutoff_input.setValue(a)
-                    self.ripple_row_min_input.setValue(b)
-                    self.ripple_row_max_input.setValue(c)
+                if use_window:
+                    if true_i == 18:
+                        fz = float(line)
+                        self.faber_ziman_row_input.setValue(fz)
+                    elif true_i == 22:
+                        split = line.split()
+                        a, b, c = [float(x) for x in split]
+                        self.ripple_row_cutoff_input.setValue(a)
+                        self.ripple_row_min_input.setValue(b)
+                        self.ripple_row_max_input.setValue(c)
+                else:
+                    if true_i == 17:
+                        fz = float(line)
+                        self.faber_ziman_row_input.setValue(fz)
+                    elif true_i == 21:
+                        split = line.split()
+                        a, b, c = [float(x) for x in split]
+                        self.ripple_row_cutoff_input.setValue(a)
+                        self.ripple_row_min_input.setValue(b)
+                        self.ripple_row_max_input.setValue(c)
+
+
+                true_i += 1
 
 
                     
-
-
 
 
 
@@ -449,6 +472,7 @@ class StoGControls(QWidget):
             self.r_max_row_input.value(),
             self.r_point_row_input.value(),
             self.windows_function_row_checkbox.isChecked(),
+            f"{stem}_ft_lorch.gr",
             self.number_density_row_input.value(),
             self.yoffset2_row_input.value(),
             False,
@@ -478,6 +502,7 @@ class StoGControls(QWidget):
             self.r_max_row_input.value(),
             self.r_point_row_input.value(),
             self.windows_function_row_checkbox.isChecked(),
+            f"{stem}_ft_lorch.gr",
             self.number_density_row_input.value(),
             self.yoffset2_row_input.value(),
             False,
