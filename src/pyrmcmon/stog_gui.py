@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QSettings, pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QPushButton, QLabel, QDoubleSpinBox, QSpinBox, QLineEdit, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QFileDialog, QTabWidget, QErrorMessage
+from PyQt6.QtWidgets import QPushButton, QLabel, QDoubleSpinBox, QSpinBox, QLineEdit, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QFileDialog, QTabWidget, QErrorMessage, QMessageBox
 from dataclasses import dataclass
 import os
 import subprocess
@@ -530,8 +530,13 @@ class StoGControls(QWidget):
                              input=conf_rel.to_text(), text=True, env=env,
                              cwd=self.output_dir, capture_output=True)
 
-        print(res)
         print(f"{SETTINGS.value("RMCProfileDir")}/exe/stog_new")
+        print(res)
+
+        if res.returncode != 0:
+            QMessageBox.critical(self, "PyRMCMon Error", f"Error while running StoG:\n" + res.stderr)
+            return
+
 
         self.stog_conf_run.emit(conf_abs)
 
@@ -581,7 +586,8 @@ class StartingPlot(QWidget):
         try:
             self.data = np.genfromtxt(conf.input_filename, skip_header=2)
         except Exception as e:
-            QErrorMessage(f"Unable to plot starting S(Q): {e}")
+            QMessageBox.critical(self, "PyRMCMon Error", f"Unable to plot starting S(Q): {e}")
+            return 
 
         self.plot.axes.plot(self.data[:, 0], self.data[:, 1], color="k")
         self.plot.axes.set_xlabel(r"Q [$\AA^{-1}$]", fontsize=16)
