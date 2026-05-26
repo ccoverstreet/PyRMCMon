@@ -51,9 +51,18 @@ class MonitorPage(QWidget):
         super().__init__()
 
         self.hbox = QHBoxLayout()
+        self.left_widget = QWidget()
+        self.left_widget.setMaximumWidth(200)
+        self.vbox_left = QVBoxLayout(self.left_widget)
 
         self.controls = ControlPane()
-        self.hbox.addWidget(self.controls)
+        self.vbox_left.addWidget(self.controls)
+        self.rmc_data_file_label = QLabel("")
+        self.rmc_data_file_label.setWordWrap(True)
+        self.vbox_left.addWidget(self.rmc_data_file_label)
+
+        self.hbox.addWidget(self.left_widget)
+
 
         self.tabs = QTabWidget()
 
@@ -82,6 +91,7 @@ class MonitorPage(QWidget):
     @pyqtSlot(str)
     def handle_rmc_file_selected(self, filename):
         print(f"RMC file selected: {filename}")
+        self.rmc_data_file_label.setText(filename)
 
 
 class ControlPane(QWidget):

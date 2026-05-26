@@ -77,6 +77,7 @@ class StoGPage(QWidget):
         self.hbox = QHBoxLayout()
 
         self.controls = StoGControls()
+        self.controls.setMaximumWidth(600)
         self.plots = StoGPlotting()
 
         self.controls.stog_conf_run.connect(self.plots.plot_stog)
@@ -534,6 +535,8 @@ class StoGControls(QWidget):
         print(res)
 
         if res.returncode != 0:
+            out = str(res.stdout)
+            print(res.stdout)
             QMessageBox.critical(self, "PyRMCMon Error", f"Error while running StoG:\n" + res.stderr)
             return
 
