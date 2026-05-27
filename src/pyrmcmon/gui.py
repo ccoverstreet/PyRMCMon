@@ -2,7 +2,7 @@ import sys
 import os
 
 from PyQt6.QtCore import (pyqtSignal, pyqtSlot, QSettings)
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QHBoxLayout, QTabWidget, QVBoxLayout, QFileDialog, QLineEdit, QDoubleSpinBox, QSpinBox, QCheckBox
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QHBoxLayout, QTabWidget, QVBoxLayout, QFileDialog, QLineEdit, QDoubleSpinBox, QSpinBox, QCheckBox, QTextEdit
 import pyqtgraph as pg
 from dataclasses import dataclass
 import numpy as np
@@ -71,11 +71,13 @@ class MonitorPage(QWidget):
         self.BraggTab = BraggTab()
         self.PDFTab = PDFTab()
         self.PartialPDFTab = PartialPDFTab()
+        self.ConfigFileTab = ConfigFileTab()
         self.tabs.addTab(self.SQTab, "S(Q)")
         self.tabs.addTab(self.PartialSQTab, "S(Q) Partials")
         self.tabs.addTab(self.BraggTab, "Bragg")
         self.tabs.addTab(self.PDFTab, "PDF")
         self.tabs.addTab(self.PartialPDFTab, "PDF Partials")
+        self.tabs.addTab(self.ConfigFileTab, "RMC Config")
 
         self.hbox.addWidget(self.tabs)
 
@@ -85,6 +87,7 @@ class MonitorPage(QWidget):
         self.controls.rmc_file_selected.connect(self.BraggTab.plot_rmc)
         self.controls.rmc_file_selected.connect(self.PDFTab.plot_rmc)
         self.controls.rmc_file_selected.connect(self.PartialPDFTab.plot_rmc)
+        self.controls.rmc_file_selected.connect(self.ConfigFileTab.plot_rmc)
 
         self.setLayout(self.hbox)
 
@@ -317,6 +320,21 @@ class PartialPDFTab(QWidget):
         self.plot.update_plot()
 
 
+class ConfigFileTab(QWidget):
+    def __init__(self):
+        super().__init__()
 
+        self.layout = QHBoxLayout()
 
+        self.editor = QTextEdit()
+        self.editor.setReadOnly(True)
 
+        self.layout.addWidget(self.editor)
+
+        self.setLayout(self.layout)
+
+    def plot_rmc(self, file):
+        with open(file) as f:
+            contents = f.read()
+
+        self.editor.setText(contents)
