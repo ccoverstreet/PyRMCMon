@@ -227,6 +227,7 @@ class BraggTab(QWidget):
     @pyqtSlot(str)
     def plot_rmc(self, file):
         self.plot.axes.clear()
+        self.plot.update_plot()
         dirname, stem = get_dir_and_stem(file)
         SQ1_filename = f"{dirname}/{stem}_bragg.csv"
         try:
