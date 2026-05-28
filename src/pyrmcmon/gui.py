@@ -396,6 +396,7 @@ class ConfigFileTab(QWidget):
         self.setLayout(self.layout)
 
     def plot_rmc(self, file):
+        self.editor.setText("")
         with open(file) as f:
             contents = f.read()
 
@@ -411,6 +412,7 @@ class RMC6FTab(QWidget):
         self.editor.setReadOnly(True)
 
     def plot_rmc(self, file):
+        self.editor.setText("")
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}.rmc6f"
         try:
