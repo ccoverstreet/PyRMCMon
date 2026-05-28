@@ -71,13 +71,17 @@ class MonitorPage(QWidget):
         self.BraggTab = BraggTab()
         self.PDFTab = PDFTab()
         self.PartialPDFTab = PartialPDFTab()
+        self.Chi2Tab = Chi2Tab()
         self.ConfigFileTab = ConfigFileTab()
+        self.RMC6FTab = RMC6FTab()
         self.tabs.addTab(self.SQTab, "S(Q)")
         self.tabs.addTab(self.PartialSQTab, "S(Q) Partials")
         self.tabs.addTab(self.BraggTab, "Bragg")
         self.tabs.addTab(self.PDFTab, "PDF")
         self.tabs.addTab(self.PartialPDFTab, "PDF Partials")
+        self.tabs.addTab(self.Chi2Tab, "Convergence")
         self.tabs.addTab(self.ConfigFileTab, "RMC Config")
+        self.tabs.addTab(self.RMC6FTab, "RMC6F")
 
         self.hbox.addWidget(self.tabs)
 
@@ -87,7 +91,9 @@ class MonitorPage(QWidget):
         self.controls.rmc_file_selected.connect(self.BraggTab.plot_rmc)
         self.controls.rmc_file_selected.connect(self.PDFTab.plot_rmc)
         self.controls.rmc_file_selected.connect(self.PartialPDFTab.plot_rmc)
+        self.controls.rmc_file_selected.connect(self.Chi2Tab.plot_rmc)
         self.controls.rmc_file_selected.connect(self.ConfigFileTab.plot_rmc)
+        self.controls.rmc_file_selected.connect(self.RMC6FTab.plot_rmc)
 
         self.setLayout(self.hbox)
 
@@ -320,6 +326,61 @@ class PartialPDFTab(QWidget):
 
         self.plot.update_plot()
 
+class Chi2Tab(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout()
+
+        self.plot = PlotWidget()
+        
+        self.layout.addWidget(self.plot)
+
+        self.setLayout(self.layout)
+
+    @pyqtSlot(str)
+    def plot_rmc(self, file):
+        self.plot.axes.clear()
+        self.plot.update_plot()
+        self.plot.fig.clear()
+        dirname, stem = get_dir_and_stem(file)
+        filename = f"{dirname}/{stem}.chi2"
+        try:
+            self.data = np.genfromtxt(filename, skip_header=1)
+        except Exception as e:
+            print(e)
+            return
+
+        header = []
+        with open(filename) as f:
+            for line in f:
+                header = line.replace("\n", "").split(",")
+                break
+
+
+        [ax1, ax2] = self.plot.fig.subplots(1, 2)
+        ax1.plot(self.data[:, 1],
+              color="k", label="Generated")
+        ax1.plot(self.data[:, 2],
+              color="tab:blue", ls="--", label="Tested")
+        ax1.plot(self.data[:, 0],
+              color="tab:green", ls="--", label="Accepted")
+
+        ax1.set_xlabel(r"Index", fontsize=16)
+        ax1.set_ylabel(r"Moves", fontsize=16)
+        ax1.legend()
+
+        index_log = np.arange(0, len(self.data), 1) + 1
+        ax2.plot(index_log, self.data[:, 3], color="k")
+        ax2.set_xlabel(r"log(Index)", fontsize=16)
+        ax2.set_ylabel(r"$log(\chi^2$)", fontsize=16)
+        ax2.set_xscale("log")
+        ax2.set_yscale("log")
+
+        self.plot.fig.tight_layout()
+        self.plot.update_plot()
+
+
 
 class ConfigFileTab(QWidget):
     def __init__(self):
@@ -339,3 +400,29 @@ class ConfigFileTab(QWidget):
             contents = f.read()
 
         self.editor.setText(contents)
+
+class RMC6FTab(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout()
+
+        self.editor = QTextEdit()
+        self.editor.setReadOnly(True)
+
+    def plot_rmc(self, file):
+        dirname, stem = get_dir_and_stem(file)
+        filename = f"{dirname}/{stem}.rmc6f"
+        try:
+            with open(filename) as f:
+                contents = f.read()
+        except Exception as e:
+            print(e)
+            return
+
+
+        self.editor.setText(contents)
+        self.layout.addWidget(self.editor)
+
+        self.setLayout(self.layout)
+
