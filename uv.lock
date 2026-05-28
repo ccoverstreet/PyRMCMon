@@ -577,7 +577,7 @@ wheels = [
 
 [[package]]
 name = "pyrmcmon"
-version = "0.5.8"
+version = "0.5.9"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
