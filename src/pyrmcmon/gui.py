@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLa
 import pyqtgraph as pg
 from dataclasses import dataclass
 import numpy as np
+import pandas as pd
 
 from .stog_gui import StoGPage
 from .util_gui import PlotWidget
@@ -376,18 +377,37 @@ class Chi2Tab(QWidget):
         self.plot.fig.clear()
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}.chi2"
+        print("Reading chi2", filename)
         try:
-            self.data = np.genfromtxt(filename, skip_header=1)
+            #self.data = pd.read_csv(filename, sep=" ", header=0)
+            
+            with open(filename) as f:
+                header = next(f)
+                columns = len(header.split())
+
+                print(next(f))
+
+                vals = [float(v) for line in f for v in line.split()]
+                self.data = np.fromiter(vals, float).reshape(-1, columns)
+            #self.data = np.genfromtxt(filename, skip_header=1, dtype=float)
         except Exception as e:
             print(e)
             return
 
+        print(np.shape(self.data))
         header = []
         with open(filename) as f:
             for line in f:
                 header = line.replace("\n", "").split(",")
                 break
 
+
+        if len(self.data) > 10000:
+            print("Culling data")
+            l = len(self.data)
+            stride = l // 10000
+            print("Stride", stride)
+            self.data = self.data[::stride, :]
 
         [ax1, ax2] = self.plot.fig.subplots(1, 2)
         ax1.plot(self.data[:, 1],
@@ -399,7 +419,7 @@ class Chi2Tab(QWidget):
 
         ax1.set_xlabel(r"Index", fontsize=16)
         ax1.set_ylabel(r"Moves", fontsize=16)
-        ax1.legend()
+        ax1.legend(loc="lower right")
 
         index_log = np.arange(0, len(self.data), 1) + 1
         ax2.plot(index_log, self.data[:, 3], color="k")
@@ -446,15 +466,19 @@ class RMC6FTab(QWidget):
         self.editor.setText("")
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}.rmc6f"
+        header = ""
         try:
             with open(filename) as f:
-                contents = f.read()
+                for line in f:
+                    header += line
+                    if line.startswith("Atoms:"):
+                        break
         except Exception as e:
             print(e)
             return
 
 
-        self.editor.setText(contents)
+        self.editor.setText(header)
         self.layout.addWidget(self.editor)
 
         self.setLayout(self.layout)
