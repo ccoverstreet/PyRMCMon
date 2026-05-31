@@ -161,7 +161,7 @@ class SQTab(QWidget):
         dirname, stem = get_dir_and_stem(file)
         SQ1_filename = f"{dirname}/{stem}_SQ1.csv"
         try:
-            self.data = np.genfromtxt(SQ1_filename, delimiter=",")
+            self.data = np.genfromtxt(SQ1_filename, delimiter=",", skip_header=1)
         except Exception as e:
             print(e)
             return
@@ -170,6 +170,17 @@ class SQTab(QWidget):
                             color="k")
         self.plot.axes.plot(self.data[:, 0], self.data[:, 1], label="RMC",
                             color="tab:red", ls="--")
+
+        # Difference
+        v_max = np.max(self.data[:, 1:3])
+        v_min = np.min(self.data[:, 1:3])
+        diff = v_max - v_min
+        print(diff, v_max, v_min)
+        self.plot.axes.axhline(v_min - 0.1*diff, color="k", ls=":")
+        self.plot.axes.plot(self.data[:, 0],
+                            self.data[:, 2] - self.data[:, 1] + v_min - 0.1*(diff),
+                            color="tab:green")
+
         self.plot.axes.set_xlabel(r"Q [$\AA^{-1}$]", fontsize=16)
         self.plot.axes.set_ylabel(r"S(Q)", fontsize=16)
         self.plot.axes.legend()
@@ -237,7 +248,7 @@ class BraggTab(QWidget):
         dirname, stem = get_dir_and_stem(file)
         SQ1_filename = f"{dirname}/{stem}_bragg.csv"
         try:
-            self.data = np.genfromtxt(SQ1_filename, delimiter=",")
+            self.data = np.genfromtxt(SQ1_filename, delimiter=",", skip_header=1)
         except Exception as e:
             print(e)
             return
@@ -247,6 +258,16 @@ class BraggTab(QWidget):
                             color="k")
         self.plot.axes.plot(self.data[:, 0], self.data[:, 1], label="RMC",
                             color="tab:red", ls="--")
+
+        # Difference
+        v_max = np.max(self.data[:, 1:3])
+        v_min = np.min(self.data[:, 1:3])
+        diff = v_max - v_min
+        self.plot.axes.axhline(v_min - 0.1*diff, color="k", ls=":")
+        self.plot.axes.plot(self.data[:, 0],
+                            self.data[:, 2] - self.data[:, 1] + v_min - 0.1*(diff),
+                            color="tab:green")
+
         self.plot.axes.set_xlabel(r"TOF or 2$\theta$", fontsize=16)
         self.plot.axes.set_ylabel(r"Intensity", fontsize=16)
         self.plot.axes.legend()
@@ -272,7 +293,7 @@ class PDFTab(QWidget):
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}_PDF1.csv"
         try:
-            self.data = np.genfromtxt(filename, delimiter=",")
+            self.data = np.genfromtxt(filename, delimiter=",", skip_header=1)
         except Exception as e:
             print(e)
             return
@@ -281,6 +302,16 @@ class PDFTab(QWidget):
                             color="k")
         self.plot.axes.plot(self.data[:, 0], self.data[:, 1], label="RMC",
                             color="tab:red", ls="--")
+
+        # Difference
+        v_max = np.max(self.data[:, 1:3])
+        v_min = np.min(self.data[:, 1:3])
+        diff = v_max - v_min
+        self.plot.axes.axhline(v_min - 0.1*diff, color="k", ls=":")
+        self.plot.axes.plot(self.data[:, 0],
+                            self.data[:, 2] - self.data[:, 1] + v_min - 0.1*(diff),
+                            color="tab:green")
+
         self.plot.axes.set_xlabel(r"r [$\AA$]", fontsize=16)
         self.plot.axes.set_ylabel(r"G(r), D(r), or T(r)", fontsize=16)
         self.plot.axes.legend()
