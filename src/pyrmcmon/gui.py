@@ -101,7 +101,10 @@ class MonitorPage(QWidget):
     @pyqtSlot(str)
     def handle_rmc_file_selected(self, filename):
         print(f"RMC file selected: {filename}")
-        self.rmc_data_file_label.setText(filename)
+        spaced_filename = ""
+        for f in filename:
+            spaced_filename += f + "\u200b"
+        self.rmc_data_file_label.setText(spaced_filename)
 
 
 class ControlPane(QWidget):
