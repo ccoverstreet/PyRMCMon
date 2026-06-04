@@ -1,12 +1,13 @@
 import sys
 import os
 
-from PyQt6.QtCore import (pyqtSignal, pyqtSlot, QSettings)
+from PyQt6.QtCore import (pyqtSignal, pyqtSlot, QSettings, QObject, QThread)
 from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QHBoxLayout, QTabWidget, QVBoxLayout, QFileDialog, QLineEdit, QDoubleSpinBox, QSpinBox, QCheckBox, QTextEdit
 import pyqtgraph as pg
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
+from concurrent.futures import ProcessPoolExecutor
 
 from .stog_gui import StoGPage
 from .util_gui import PlotWidget
@@ -361,6 +362,45 @@ class PartialPDFTab(QWidget):
 
         self.plot.update_plot()
 
+
+def loadchi2(filename):
+    with open(filename) as f:
+        header = next(f)
+        columns = len(header.split())
+
+        print(next(f))
+
+        vals = [float(v) for line in f for v in line.split()]
+        data = np.fromiter(vals, float).reshape(-1, columns)
+
+    return data
+
+class Chi2Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(object)
+        
+
+    def __init__(self, filename):
+        super().__init__()
+        self.filename = filename
+
+
+    def run(self):
+        try:
+            with ProcessPoolExecutor(max_workers=1) as ex:
+                future = ex.submit(loadchi2, self.filename)
+
+                data = future.result()
+        except Exception as e:
+            print(e)
+            return
+        
+
+
+        self.progress.emit([data])
+        self.finished.emit()
+
+
 class Chi2Tab(QWidget):
     def __init__(self):
         super().__init__()
@@ -381,36 +421,33 @@ class Chi2Tab(QWidget):
         dirname, stem = get_dir_and_stem(file)
         filename = f"{dirname}/{stem}.chi2"
         print("Reading chi2", filename)
-        try:
-            #self.data = pd.read_csv(filename, sep=" ", header=0)
-            
-            with open(filename) as f:
-                header = next(f)
-                columns = len(header.split())
 
-                print(next(f))
+        self.thread = QThread()
+        self.worker = Chi2Worker(filename)
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.run)
+        self.worker.progress.connect(self.plot_thread_data)
 
-                vals = [float(v) for line in f for v in line.split()]
-                self.data = np.fromiter(vals, float).reshape(-1, columns)
-            #self.data = np.genfromtxt(filename, skip_header=1, dtype=float)
-        except Exception as e:
-            print(e)
-            return
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
 
-        print(np.shape(self.data))
-        header = []
-        with open(filename) as f:
-            for line in f:
-                header = line.replace("\n", "").split(",")
-                break
+        self.thread.start()
 
+        print("MAIN", int(QThread.currentThreadId()))
+
+
+
+    @pyqtSlot(object)
+    def plot_thread_data(self, data):
+        self.data = data[0]
 
         if len(self.data) > 10000:
             print("Culling data")
             l = len(self.data)
             stride = l // 10000
             print("Stride", stride)
-            self.data = self.data[::stride, :]
+            self.data = np.vstack([self.data[::stride, :], self.data[-1, :]])
 
         [ax1, ax2] = self.plot.fig.subplots(1, 2)
         ax1.plot(self.data[:, 1],
