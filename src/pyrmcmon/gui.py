@@ -391,13 +391,13 @@ class Chi2Worker(QObject):
                 future = ex.submit(loadchi2, self.filename)
 
                 data = future.result()
+                print(data)
+
+                self.progress.emit([data])
         except Exception as e:
             print(e)
-            return
-        
 
 
-        self.progress.emit([data])
         self.finished.emit()
 
 
@@ -440,7 +440,10 @@ class Chi2Tab(QWidget):
 
     @pyqtSlot(object)
     def plot_thread_data(self, data):
+        if len(data[0]) == 0:
+            return
         self.data = data[0]
+
 
         if len(self.data) > 10000:
             print("Culling data")
